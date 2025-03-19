@@ -1,6 +1,5 @@
 # Plugin Starter
 
-
 Your plugin is ready! Here's what you can do next:
 1. `npx @elizaos/cli start` to start development
 2. `npx @elizaos/cli test` to test your plugin
@@ -11,6 +10,12 @@ Actions
 1. Create Order - DONE, Testing pending
 2. Cancel Order - DONE, Testing pending
 3. View status of an order - DONE, Testing pending
+
+TODO
+
+1. Testing
+2. Documentation
+3. Publish
 
 TODO LATER
 

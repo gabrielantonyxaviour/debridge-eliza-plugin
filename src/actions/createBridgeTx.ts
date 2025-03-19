@@ -15,10 +15,11 @@ import {
     DebridgeError,
 } from "../types";
 import { createBridgeTemplate } from "../templates";
-import { createPublicClient, createWalletClient, Hex, http, zeroAddress, parseUnits, parseAbiItem } from "viem"
+import { createPublicClient, createWalletClient, Hex, http, zeroAddress, parseUnits, parseAbiItem, erc20Abi } from "viem"
 
 import { privateKeyToAccount } from "viem/accounts"
 import { getAsset, getChain, waitForOrderFulfillment } from "../lib/utils";
+import { dlnCrosschainForwarder } from "src/constants";
 
 export const createBridgeTx: Action = {
     name: "CREATE_BRIDGE_TX",
@@ -98,6 +99,28 @@ export const createBridgeTx: Action = {
                 transport: http(sourceChain.rpcUrl),
             })
             const sourceAmount = parseUnits(amount.toString(), sourceAssetData.decimals);
+
+            if (source_asset != 'NATIVE') {
+                const allowance = await sourcePublicClient.readContract({
+                    address: sourceAssetData.address as Hex,
+                    abi: erc20Abi,
+                    functionName: "allowance",
+                    args: [account.address, dlnCrosschainForwarder]
+                });
+                if (allowance < sourceAmount) {
+                    const { request } = await sourcePublicClient.simulateContract({
+                        address: sourceAssetData.address as Hex,
+                        abi: erc20Abi,
+                        functionName: "approve",
+                        args: [dlnCrosschainForwarder, sourceAmount]
+                    })
+                    const approveTxHash = await walletClient.writeContract(request)
+                    await sourcePublicClient.waitForTransactionReceipt({
+                        hash: approveTxHash
+                    })
+                }
+            }
+
             const requestUrl = `https://dln.debridge.finance/v1.0/dln/order/create-tx?srcChainId=${sourceChain.internalChainId}&srcChainTokenIn=${sourceAssetData.address}&srcChainTokenInAmount=${sourceAmount}&dstChainId=${destinationChain.internalChainId}&dstChainTokenOut=${destinationAssetData.address}&dstChainTokenOutAmount=auto&dstChainTokenOutRecipient=${account.address}&senderAddress=${account.address}&srcChainOrderAuthorityAddress=${account.address}&affiliateFeePercent=0&dstChainOrderAuthorityAddress=${account.address}&enableEstimate=true&prependOperatingExpenses=false&skipSolanaRecipientValidation=false`;
             const response = await fetch(requestUrl)
             const responseData: any = await response.json()
