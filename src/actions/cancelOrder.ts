@@ -5,20 +5,15 @@ import {
     type Memory,
     type State,
     type HandlerCallback,
-    composeContext,
     elizaLogger,
-    generateObjectDeprecated,
-    ModelClass,
 } from "@elizaos/core";
 import {
-    BridgeTxSchema,
     DebridgeError,
 } from "../types";
-import { createBridgeTemplate } from "../templates";
-import { createPublicClient, createWalletClient, Hex, http, zeroAddress, parseUnits, parseAbiItem } from "viem"
+import { Hex } from "viem"
 
 import { privateKeyToAccount } from "viem/accounts"
-import { getAsset, getChain, waitForOrderFulfillment } from "../lib/utils";
+import { cancelOrderHelper } from "../lib/utils";
 
 export const cancelOrder: Action = {
     name: "CANCEL_ORDER",
@@ -44,16 +39,71 @@ export const cancelOrder: Action = {
                 const hexRegex = /\b([0-9a-fA-F]{64})\b/;
                 const match = messageText.match(hexRegex);
                 if (match) {
-                    // TODO: Check if its order id or tx hash
-                    // TODO: Cancel the order if still active
+                    const hash = match[0];
+
+                    const txResponse = await fetch(`https://dln.debridge.finance/v1.0/dln/tx/${hash}/order-ids`)
+                    const { errorMessage: error, orderIds } = (await txResponse.json()) as any;
+                    if (error) {
+                        elizaLogger.error(error);
+                        throw new DebridgeError(error);
+                    } else {
+                        if (orderIds.length === 0) {
+                            const orderResponse = await fetch(`https://dln.debridge.finance/v1.0/dln/order/${hash}/status`)
+                            const { errorMessage, status } = (await orderResponse.json()) as any;
+                            if (errorMessage) {
+                                elizaLogger.error(errorMessage);
+                                throw new DebridgeError(errorMessage);
+                            } else {
+                                if (status === 'Completed') {
+                                    elizaLogger.error("Order already completed");
+                                    throw new DebridgeError("Order already completed");
+                                } else {
+                                    const { cancelOrderTx, error } = await cancelOrderHelper(hash as Hex, account)
+                                    if (error) {
+                                        elizaLogger.error(error);
+                                        throw new DebridgeError(error);
+                                    }
+
+                                    if (callback) {
+                                        callback({
+                                            text: `Successfully cancelled the order. \nOrder Id: ${hash}\nTx Hash: ${cancelOrderTx}`,
+                                        })
+                                    }
+                                    return true
+                                }
+                            }
+                        } else {
+                            const orderId = orderIds[0];
+                            const orderResponse = await fetch(`https://dln.debridge.finance/v1.0/dln/order/${orderId}/status`)
+                            const { status } = (await orderResponse.json()) as any;
+                            if (status === 'Completed') {
+                                elizaLogger.error("Order already completed");
+                                throw new DebridgeError("Order already completed");
+                            } else {
+                                const { cancelOrderTx, error } = await cancelOrderHelper(orderId as Hex, account)
+                                if (error) {
+                                    elizaLogger.error(error);
+                                    throw new DebridgeError(error);
+                                }
+
+                                if (callback) {
+                                    callback({
+                                        text: `Successfully cancelled the order. \nOrder Id: ${orderId}\nTx Hash: ${cancelOrderTx}`,
+                                    })
+                                }
+                                return true
+                            }
+                        }
+                    }
+
                 } else {
                     elizaLogger.error("Invalid Order Id string or Tx Hash. Make sure its properly formatted");
                     throw new DebridgeError("Invalid Order Id string or Tx Hash. Make sure its properly formatted")
                 }
             } else {
-                // TODO: Cancel all orders
+                elizaLogger.info("Could not find Order Id or Tx Hash in the message");
+                throw new DebridgeError("Could not find Order Id or Tx Hash in the message")
             }
-
         } catch (error) {
             elizaLogger.error("Error cancelling orders with debridge: ", error);
             if (callback) {
