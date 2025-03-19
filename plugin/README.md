@@ -9,8 +9,8 @@ Your plugin is ready! Here's what you can do next:
 Actions 
 
 1. Create Order - DONE, Testing pending
-2. Cancel Order
-3. View status of an order
+2. Cancel Order - DONE, Testing pending
+3. View status of an order - DONE, Testing pending
 
 TODO LATER
 
