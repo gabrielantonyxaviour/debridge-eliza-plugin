@@ -8,7 +8,7 @@
   "types": "dist/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/elizaos-plugins/plugin-starter.git"
+    "url": "https://github.com/elizaos-plugins/plugin-starter"
   },
   "exports": {
     "./package.json": "./package.json",
@@ -49,5 +49,18 @@
   "resolutions": {
     "zod": "3.24.2"
   },
-  "gitHead": "b165ad83e5f7a21bc1edbd83374ca087e3cd6b33"
+  "gitHead": "b165ad83e5f7a21bc1edbd83374ca087e3cd6b33",
+  "agentConfig": {
+    "pluginType": "elizaos:plugin:1.0.0",
+    "pluginParameters": {
+      "DEBRIDGE_PRIVATE_KEY": {
+        "type": "string",
+        "description": "Required private key to perform actions on DeBridge"
+      },
+      "DEBRIDGE_API_KEY": {
+        "type": "string",
+        "description": "Optional API key for the better rate limits"
+      }
+    }
+  }
 }
