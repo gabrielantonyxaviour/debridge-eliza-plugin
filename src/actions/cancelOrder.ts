@@ -67,6 +67,7 @@ export const cancelOrder: Action = {
                                     if (callback) {
                                         callback({
                                             text: `Successfully cancelled the order. \nOrder Id: ${hash}\nTx Hash: ${cancelOrderTx}`,
+                                            actions: ['CANCEL_ORDER']
                                         })
                                     }
                                     return true
@@ -89,6 +90,7 @@ export const cancelOrder: Action = {
                                 if (callback) {
                                     callback({
                                         text: `Successfully cancelled the order. \nOrder Id: ${orderId}\nTx Hash: ${cancelOrderTx}`,
+                                        actions: ['CANCEL_ORDER']
                                     })
                                 }
                                 return true
@@ -118,20 +120,20 @@ export const cancelOrder: Action = {
     examples: [
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "Cancel order with Tx Hash 0x0992a5970e525ad22eb73e7e213621c731723a776663e3fdb3acafbec06787c5",
                 },
             },
             {
-                user: "{{agent}}",
+                name: "{{name2}}",
                 content: {
                     text: "I'll cancel order with Tx Hash 0992a5970e525ad22eb73e7e213621c731723a776663e3fdb3acafbec06787c5.",
-                    action: "CANCEL_ORDERS",
+                    action: "CANCEL_ORDER",
                 },
             },
             {
-                user: "{{agent}}",
+                name: "{{name2}}",
                 content: {
                     text: "Successfully cancelled the order. \nOrder Id: 0992a5970e525ad22eb73e7e213621c731723a776663e3fdb3acafbec06787c5\nTx Hash: 0x1b606c97629d98e04741dd5f90f6f0745c079587ea021c8c55bb63111fa2914b",
                 },
@@ -139,20 +141,20 @@ export const cancelOrder: Action = {
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "Cancel order with Order Id 0x0992a5970e525ad22eb73e7e213621c731723a776663e3fdb3acafbec06787c5",
                 },
             },
             {
-                user: "{{agent}}",
+                name: "{{name2}}",
                 content: {
                     text: "I'll cancel order with order Id 0992a5970e525ad22eb73e7e213621c731723a776663e3fdb3acafbec06787c5.",
-                    action: "CANCEL_ORDERS",
+                    action: "CANCEL_ORDER",
                 },
             },
             {
-                user: "{{agent}}",
+                name: "{{name2}}",
                 content: {
                     text: "Successfully cancelled the order. \nOrder Id: 0992a5970e525ad22eb73e7e213621c731723a776663e3fdb3acafbec06787c5\nTx Hash: 0x1b606c97629d98e04741dd5f90f6f0745c079587ea021c8c55bb63111fa2914b",
                 },

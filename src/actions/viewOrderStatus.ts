@@ -4,7 +4,7 @@ import {
     type Memory,
     type State,
     type HandlerCallback,
-    elizaLogger,
+    logger,
 } from "@elizaos/core";
 import {
     DebridgeError,
@@ -33,73 +33,76 @@ export const viewOrderStatus: Action = {
             const account = privateKeyToAccount(privateKey as Hex);
 
             const messageText = message.content.text
+            logger.info("Message Text: ", messageText)
 
             if (messageText.includes('0x')) {
-                const hexRegex = /\b([0-9a-fA-F]{64})\b/;
+                const hexRegex = /\b(0x[0-9a-fA-F]{64})\b/i;
                 const match = messageText.match(hexRegex);
                 if (match) {
                     const hash = match[0];
+                    logger.info("Parsed hash: ", hash)
+                    logger.info("Attempting to check if it's a transaction hash...")
 
                     const txResponse = await fetch(`https://dln.debridge.finance/v1.0/dln/tx/${hash}/order-ids`)
                     const { errorMessage: error, orderIds } = (await txResponse.json()) as any;
                     if (error) {
-                        elizaLogger.error(error);
+                        logger.error(error);
                         throw new DebridgeError(error);
                     } else {
                         if (orderIds.length === 0) {
+                            logger.info("Not a transaction hash. Attempting to check if it's an order id...")
                             const orderResponse = await fetch(`https://dln.debridge.finance/v1.0/dln/order/${hash}`)
                             const { errorMessage, status, orderStruct } = (await orderResponse.json()) as any;
                             if (errorMessage) {
-                                elizaLogger.error(errorMessage);
+                                logger.error(errorMessage);
                                 throw new DebridgeError(errorMessage);
                             } else {
+                                logger.info("It's an order id. Parsing order details...")
                                 const sourceChain = getChain(orderStruct.giveOffer.chainId)
                                 const destinationChain = getChain(orderStruct.takeOffer.chainId)
-                                const { sourceTxHash, destTxHash, errorMessage } = await getFetchOrderTxHashes(hash as Hex, sourceChain.rpcUrl, destinationChain.rpcUrl)
-                                if (errorMessage) {
-                                    elizaLogger.error(errorMessage);
-                                    throw new DebridgeError(errorMessage);
-                                }
-                                elizaLogger.info('Fetched Order details successfully')
+                                logger.info('Fetched Order details successfully')
                                 if (callback) {
                                     callback({
+                                        actions: ["VIEW_ORDER_STATUS"],
                                         text: `Order details:
+
 Order Id: ${hash}
 Status: ${status}
 Maker: ${account.address}
 Source chain: ${sourceChain.chain}
 Destination chain: ${destinationChain.chain}
-Source Tx Hash: ${sourceTxHash}
-Destination Tx Hash: ${destTxHash}`
+`
                                     })
                                 }
                                 return true;
 
                             }
                         } else {
+                            logger.info("It's a transaction hash. Fetching order details...")
                             const orderId = orderIds[0];
                             const orderResponse = await fetch(`https://dln.debridge.finance/v1.0/dln/order/${orderId}`)
                             const { status, orderStruct } = (await orderResponse.json()) as any;
 
                             const sourceChain = getChain(orderStruct.giveOffer.chainId)
                             const destinationChain = getChain(orderStruct.takeOffer.chainId)
-                            const { sourceTxHash, destTxHash, errorMessage } = await getFetchOrderTxHashes(orderId as Hex, sourceChain.rpcUrl, destinationChain.rpcUrl)
+                            // const { sourceTxHash, destTxHash, errorMessage } = await getFetchOrderTxHashes(orderId as Hex, sourceChain.rpcUrl, destinationChain.rpcUrl)
 
-                            if (errorMessage) {
-                                elizaLogger.error(errorMessage);
-                                throw new DebridgeError(errorMessage);
-                            }
-                            elizaLogger.info('Fetched Order details successfully')
+                            // if (errorMessage) {
+                            //     logger.error(errorMessage);
+                            //     throw new DebridgeError(errorMessage);
+                            // }
+                            logger.info('Fetched Order details successfully')
                             if (callback) {
                                 callback({
+                                    actions: ["VIEW_ORDER_STATUS"],
                                     text: `Order details:
+
 Order Id: ${hash}
 Status: ${status}
 Maker: ${account.address}
 Source chain: ${sourceChain.chain}
 Destination chain: ${destinationChain.chain}
-Source Tx Hash: ${sourceTxHash}
-Destination Tx Hash: ${destTxHash}`
+`
                                 })
                             }
                             return true;
@@ -107,19 +110,20 @@ Destination Tx Hash: ${destTxHash}`
                     }
 
                 } else {
-                    elizaLogger.error("Invalid Order Id string or Tx Hash. Make sure its properly formatted");
+                    logger.error("Invalid Order Id string or Tx Hash. Make sure its properly formatted");
                     throw new DebridgeError("Invalid Order Id string or Tx Hash. Make sure its properly formatted")
                 }
             } else {
-                elizaLogger.info("Could not find Order Id or Tx Hash in the message");
+                logger.info("Could not find Order Id or Tx Hash in the message");
                 throw new DebridgeError("Could not find Order Id or Tx Hash in the message")
             }
         } catch (error) {
-            elizaLogger.error("Error fetching order status with debridge: ", error);
+            logger.error("Error fetching order status with debridge: ", error);
             if (callback) {
                 callback({
                     text: `Error  fetching order status with debridge: ${error.message}`,
                     content: { error: error.message },
+                    actions: ["VIEW_ORDER_STATUS"]
                 });
             }
             return false;
@@ -128,20 +132,20 @@ Destination Tx Hash: ${destTxHash}`
     examples: [
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "What's the status of order with Tx Hash 0x0992a5970e525ad22eb73e7e213621c731723a776663e3fdb3acafbec06787c5",
                 },
             },
             {
-                user: "{{agent}}",
+                name: "{{name2}}",
                 content: {
                     text: "I'll check the status of order with Tx Hash 0992a5970e525ad22eb73e7e213621c731723a776663e3fdb3acafbec06787c5.",
                     action: "VIEW_ORDER_STATUS",
                 },
             },
             {
-                user: "{{agent}}",
+                name: "{{name2}}",
                 content: {
                     text: `Order details:
 Order Id: 0x69bd821cb60368ea1fc4edea221f15154fd33327fa52352def9ebabf7993c3dc
@@ -157,20 +161,20 @@ Destination Tx Hash: 0x1b606c97629d98e04741dd5f90f6f0745c079587ea021c8c55bb63111
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "Show me order with Order Id 0x0992a5970e525ad22eb73e7e213621c731723a776663e3fdb3acafbec06787c5",
                 },
             },
             {
-                user: "{{agent}}",
+                name: "{{name2}}",
                 content: {
                     text: "I'll retrieve information for order with Order Id 0992a5970e525ad22eb73e7e213621c731723a776663e3fdb3acafbec06787c5.",
                     action: "VIEW_ORDER_STATUS",
                 },
             },
             {
-                user: "{{agent}}",
+                name: "{{name2}}",
                 content: {
                     text: `Order details:
 Order Id: 0992a5970e525ad22eb73e7e213621c731723a776663e3fdb3acafbec06787c5

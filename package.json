@@ -1,15 +1,14 @@
 {
   "name": "@elizaos/plugin-debridge",
   "description": "Plugin starter for elizaOS",
-  "version": "1.0.0-beta.0",
-  "private": true,
+  "version": "1.0.0-alpha.66",
   "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "https://github.com/elizaos-plugins/plugin-starter"
+    "url": "git+https://github.com/elizaos-plugins/plugin-starter.git"
   },
   "exports": {
     "./package.json": "./package.json",
@@ -24,8 +23,9 @@
     "dist"
   ],
   "dependencies": {
-    "@elizaos/cli": "1.0.0-beta.1",
-    "@elizaos/core": "0.25.9",
+    "@elizaos/cli": "1.0.0-alpha.67",
+    "@elizaos/core": "1.0.0-alpha.67",
+    "viem": "^2.23.13",
     "zod": "3.24.2"
   },
   "devDependencies": {
@@ -49,18 +49,5 @@
   "resolutions": {
     "zod": "3.24.2"
   },
-  "gitHead": "b165ad83e5f7a21bc1edbd83374ca087e3cd6b33",
-  "agentConfig": {
-    "pluginType": "elizaos:plugin:1.0.0",
-    "pluginParameters": {
-      "DEBRIDGE_PRIVATE_KEY": {
-        "type": "string",
-        "description": "API key for the Debridge Plugin"
-      },
-      "DEBRIDGE_API_KEY": {
-        "type": "string",
-        "description": "API key for the Debridge APIs"
-      }
-    }
-  }
+  "gitHead": "b165ad83e5f7a21bc1edbd83374ca087e3cd6b33"
 }

@@ -66,7 +66,7 @@ const supportedChains: SupportedChain[] = [
         "internalChainId": 8453,
         "flatFee": 0.001,
         "currency": "ETH",
-        "rpcUrl": "https://1rpc.io/base"
+        "rpcUrl": "https://base.drpc.org"
     },
     {
         "chain": "Optimism",
@@ -90,7 +90,7 @@ const supportedChains: SupportedChain[] = [
         "internalChainId": 100000002,
         "flatFee": 1,
         "currency": "xDAI",
-        "rpcUrl": "https://1rpc.io/gnosis"
+        "rpcUrl": "https://gnosis-rpc.publicnode.com"
     },
     {
         "chain": "Metis",
